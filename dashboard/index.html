@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kaggle Company Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header id="topbar">
+        <h1>Kaggle Company</h1>
+        <div id="date-pills"></div>
+        <div id="cost-display">--</div>
+    </header>
+
+    <main id="main">
+        <!-- Org chart -->
+        <section id="orgchart-section">
+            <div class="section-label">Company State</div>
+            <svg id="orgchart" xmlns="http://www.w3.org/2000/svg"></svg>
+        </section>
+
+        <!-- Time slider -->
+        <section id="slider-section">
+            <div id="slider-info">
+                <span id="step-label">Step 0/0</span>
+                <span class="sep">·</span>
+                <span id="step-time">--</span>
+                <span class="sep">·</span>
+                <span id="step-agent">--</span>
+                <span class="sep">·</span>
+                <span id="step-type">--</span>
+                <span id="step-summary"></span>
+            </div>
+            <div id="slider-controls">
+                <button id="btn-first" title="First (Home)">⏮</button>
+                <button id="btn-prev" title="Previous (←)">◀</button>
+                <input type="range" id="slider" min="0" max="0" value="0">
+                <button id="btn-next" title="Next (→)">▶</button>
+                <button id="btn-last" title="Last (End)">⏭</button>
+            </div>
+        </section>
+
+        <!-- Detail panel -->
+        <section id="detail-section">
+            <div id="detail-tabs">
+                <button class="tab active" data-tab="summary">Summary</button>
+                <button class="tab" data-tab="conversation">Conversation</button>
+                <button class="tab" data-tab="events">Events</button>
+                <button class="tab" data-tab="constitution">Constitution</button>
+            </div>
+            <div id="detail-content">
+                <div class="welcome">
+                    Click any agent in the org chart above to inspect it.<br>
+                    <span class="hint">← / → to step through time · Esc to deselect</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Event detail modal -->
+    <div id="event-modal" class="modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="modal-title">Event Details</h2>
+                <button id="modal-close" title="Close (Esc)">×</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

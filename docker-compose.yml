@@ -1,0 +1,42 @@
+services:
+  kaggle-company:
+    build: .
+    env_file: .env
+    volumes:
+      - ./state:/app/state
+      - ./workspaces:/app/workspaces
+      - ./transcripts:/app/transcripts
+      - ./strategies:/app/strategies
+      - ./constitutions:/app/constitutions
+      - ./skills:/app/skills
+      - ./tasks:/app/tasks
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    volumes:
+      # Read agent state and transcripts (the agent writes; dashboard reads)
+      - ./transcripts:/app/transcripts:ro
+      - ./state:/app/state:ro
+      - ./constitutions:/app/constitutions:ro
+      # Bind mount the dashboard directory itself so code changes are picked
+      # up live without rebuilding the image. Removes the need to rebuild
+      # when iterating on app.js / build.py / serve.py.
+      - ./dashboard:/app/dashboard
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: always
+    depends_on:
+      - kaggle-company
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
