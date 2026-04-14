@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from src.memory.state_store import StateStore
     from src.memory.strategy import StrategyLibrary
     from src.memory.transcripts import TranscriptLogger
+    from src.orchestrator.events import EventBus
     from src.tools import ToolRegistry
 
 logger = logging.getLogger("kaggle-company.orchestrator")
@@ -44,6 +45,7 @@ class AgentManager:
         budget_tracker: BudgetTracker,
         comm_hub: CommHub,
         slack_bot: SlackBot | None = None,
+        event_bus: EventBus | None = None,
     ) -> None:
         self._settings = settings
         self._state = state_store
@@ -53,6 +55,7 @@ class AgentManager:
         self._budget = budget_tracker
         self._comm_hub = comm_hub
         self._slack_bot = slack_bot
+        self._event_bus = event_bus
 
         self._agents: dict[str, Agent] = {}
         self._tasks: dict[str, asyncio.Task] = {}

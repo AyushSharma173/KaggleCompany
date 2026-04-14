@@ -32,6 +32,14 @@ body {
     color: #fff;
 }
 
+.dash-nav { display: flex; gap: 4px; }
+.dash-nav-link {
+    padding: 4px 12px; border-radius: 12px; border: 1px solid #2a2a4a;
+    color: #8888aa; font-size: 12px; text-decoration: none; font-family: inherit;
+}
+.dash-nav-link:hover { color: #e0e0e0; border-color: #7c4dff; }
+.dash-nav-link.active { background: #7c4dff; color: #fff; border-color: #7c4dff; }
+
 #date-pills {
     display: flex;
     gap: 6px;
@@ -57,19 +65,30 @@ body {
     color: #66bb6a;
 }
 
-/* === Main layout: 3 vertical sections === */
+/* === Main layout: left/right split === */
 #main {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     overflow: hidden;
     min-height: 0;
+}
+
+/* Left column: org chart + slider */
+#left-col {
+    flex: 0 0 42%;
+    min-width: 360px;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #2a2a4a;
+    overflow: hidden;
 }
 
 /* === Org chart section === */
 #orgchart-section {
     flex: 1 1 auto;
-    min-height: 380px;
+    min-height: 200px;
     background: #16213e;
     border-bottom: 1px solid #2a2a4a;
     position: relative;
@@ -92,7 +111,7 @@ body {
     display: block;
     width: 100%;
     height: 100%;
-    min-height: 380px;
+    min-height: 200px;
 }
 
 /* Org chart node styles (SVG) */
@@ -135,12 +154,11 @@ body {
     fill: none;
 }
 
-/* === Slider section === */
+/* === Slider section (bottom of left column) === */
 #slider-section {
     flex: 0 0 auto;
     height: 90px;
     background: #1a2744;
-    border-bottom: 1px solid #2a2a4a;
     padding: 12px 20px;
     display: flex;
     flex-direction: column;
@@ -214,10 +232,9 @@ body {
     cursor: pointer;
 }
 
-/* === Detail section === */
+/* === Detail section (right column, full height) === */
 #detail-section {
-    flex: 0 0 auto;
-    height: 320px;
+    flex: 1 1 auto;
     background: #1a1a2e;
     display: flex;
     flex-direction: column;

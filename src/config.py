@@ -48,5 +48,6 @@ class Settings(BaseSettings):
     transcript_dir: str = "transcripts"
     constitution_dir: str = "constitutions"
     strategy_dir: str = "strategies"
+    skill_dir: str = "skills"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}

@@ -72,6 +72,7 @@ async def main() -> None:
     # from src.tools.gpu_tools import register_gpu_tools
     # from src.tools.kaggle_tools import register_kaggle_tools
     from src.tools.research_tools import register_research_tools
+    from src.tools.skill_tools import register_skill_tools
 
     tool_registry = ToolRegistry()
     gpu_provisioner = GPUProvisioner(
@@ -92,6 +93,7 @@ async def main() -> None:
         brave_search_api_key=settings.brave_search_api_key,
         parallel_api_key=settings.parallel_api_key,
     )
+    register_skill_tools(tool_registry, settings)
     # register_gpu_tools(tool_registry, gpu_provisioner)
     # Communication and agent mgmt tools registered after orchestrator is created
     logger.info("Tool registry initialized (%d tools)", len(tool_registry.list_all()))
@@ -99,8 +101,10 @@ async def main() -> None:
     # --- Layer 4: Communication ---
     from src.comms.inter_agent import CommHub
     from src.comms.slack_bot import SlackBot
+    from src.orchestrator.events import EventBus
 
     comm_hub = CommHub()
+    event_bus = EventBus()
     slack_bot: SlackBot | None = None
 
     if settings.slack_bot_token and settings.slack_app_token:
@@ -123,12 +127,69 @@ async def main() -> None:
         budget_tracker=budget_tracker,
         comm_hub=comm_hub,
         slack_bot=slack_bot,
+        event_bus=event_bus,
     )
 
     # Now register tools that need orchestrator reference
-    register_communication_tools(tool_registry, slack_bot, comm_hub, state_store)
+    register_communication_tools(
+        tool_registry, slack_bot, comm_hub, state_store, event_bus=event_bus
+    )
     register_agent_mgmt_tools(tool_registry, manager)
     logger.info("All tools registered (%d total)", len(tool_registry.list_all()))
+
+    # --- Workflow layer: subscribe handlers from config ---
+    # The source of truth for which handlers are active is
+    # state/workflow_config.json, editable from the control dashboard.
+    # See alignment.md Part 8.
+    import json as _json
+    from src.workflows.handlers import (
+        make_notify_vp_for_review_handler,
+        make_upload_report_to_slack_handler,
+    )
+
+    _handler_factories = {
+        "notify_vp_for_review": lambda: make_notify_vp_for_review_handler(manager),
+        "upload_report_to_slack": lambda: make_upload_report_to_slack_handler(slack_bot),
+    }
+
+    _workflow_config_path = Path("state/workflow_config.json")
+    if _workflow_config_path.exists():
+        _wf_config = _json.loads(_workflow_config_path.read_text())
+        for _event_type, _handler_list in _wf_config.items():
+            for _entry in _handler_list:
+                if _entry.get("enabled") and _entry["handler"] in _handler_factories:
+                    event_bus.subscribe(
+                        _event_type,
+                        _handler_factories[_entry["handler"]](),
+                    )
+        logger.info("Workflow config loaded from %s", _workflow_config_path)
+    else:
+        # Fallback: default handler if no config file exists
+        event_bus.subscribe(
+            "report.saved",
+            make_notify_vp_for_review_handler(manager),
+        )
+        logger.info("No workflow config found — using default handler")
+
+    logger.info(
+        "Workflow handlers registered: %s",
+        event_bus.list_subscriptions(),
+    )
+
+    # Write tool manifest for the control dashboard
+    _tool_manifest = []
+    for _name in tool_registry.list_all():
+        _td = tool_registry.get_definition(_name)
+        if _td:
+            _tool_manifest.append({
+                "name": _td.name,
+                "description": _td.description,
+                "allowed_roles": sorted(r.value for r in _td.allowed_roles),
+            })
+    _manifest_path = Path("state/tool_manifest.json")
+    _manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    _manifest_path.write_text(_json.dumps(_tool_manifest, indent=2))
+    logger.info("Tool manifest written to %s (%d tools)", _manifest_path, len(_tool_manifest))
 
     health = HealthMonitor(state_store, manager)
     scheduler = Scheduler(manager, budget_tracker, health)

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from src.comms.inter_agent import CommHub
     from src.comms.slack_bot import SlackBot
     from src.memory.state_store import StateStore
+    from src.orchestrator.events import EventBus
 
 logger = logging.getLogger("kaggle-company.tools.comms")
 
@@ -25,14 +26,23 @@ def make_communication_tools(
     slack_bot: SlackBot | None,
     comm_hub: CommHub | None,
     state_store: StateStore | None,
+    event_bus: EventBus | None = None,
 ) -> list[ToolDefinition]:
     """Create communication tools with bound references."""
 
     async def save_report(params: dict[str, Any]) -> str:
-        """Save a full report to file and upload it to Slack as a document."""
+        """Save a full report to file and emit a `report.saved` event.
+
+        The tool no longer uploads to Slack directly. It writes the file to
+        disk and emits `report.saved` on the event bus. The workflow layer
+        decides where the report goes from there (notify VP, upload to a
+        channel, etc.) — see `src/workflows/handlers.py` and the
+        registrations in `main.py`.
+        """
         title = params.get("title", "report")
         content = params.get("content", "")
         slack_channel = params.get("slack_channel", "")
+        agent_id = params.get("_agent_id", "unknown")
 
         if not content:
             return "Error: content is required"
@@ -50,31 +60,22 @@ def make_communication_tools(
 
         result = f"Report saved to {filepath} ({len(content)} chars)"
 
-        # Upload file to Slack channel
-        if slack_channel and slack_bot:
-            channel_id = slack_bot.get_channel_id(slack_channel)
-            if not channel_id:
-                # Try normalized key
-                normalized = slack_channel.replace("-", "_")
-                channel_id = slack_bot.get_channel_id(normalized)
-            if not channel_id and slack_channel.startswith("C"):
-                channel_id = slack_channel
-
-            if channel_id:
-                try:
-                    await slack_bot._app.client.files_upload_v2(
-                        channel=channel_id,
-                        content=content,
-                        filename=filename,
-                        title=title,
-                        initial_comment=f"Competition Intelligence Report: *{title}*",
-                    )
-                    result += f" | File uploaded to #{slack_channel}"
-                except Exception as e:
-                    logger.error("Failed to upload report to Slack: %s", e)
-                    result += f" | Failed to upload to Slack: {e}"
-            else:
-                result += f" | Channel '{slack_channel}' not found"
+        # Emit event so the workflow layer can route it.
+        if event_bus is not None:
+            await event_bus.emit(
+                "report.saved",
+                {
+                    "agent_id": agent_id,
+                    "title": title,
+                    "filepath": str(filepath),
+                    "filename": filename,
+                    "content": content,
+                    "slack_channel": slack_channel,
+                },
+            )
+            result += " | report.saved event emitted"
+        else:
+            result += " | (no event bus configured — file saved locally only)"
 
         return result
 
@@ -203,10 +204,11 @@ def make_communication_tools(
         ToolDefinition(
             name="save_report",
             description=(
-                "Save a full report to a markdown file and upload it to a Slack channel as a document. "
-                "Use this for Competition Intelligence Reports and any long-form output. "
-                "The full report is saved locally in reports/ AND uploaded as a file to Slack "
-                "so the CEO can read and download it. Nothing gets truncated."
+                "Save a full report to a markdown file in reports/ and emit a `report.saved` event "
+                "on the workflow event bus. Use this for Competition Intelligence Reports and any "
+                "long-form output. The workflow layer routes the report from there (notify the VP, "
+                "upload to a Slack channel, etc.) — you do not need to upload it yourself. "
+                "Nothing gets truncated."
             ),
             input_schema={
                 "type": "object",
@@ -272,7 +274,8 @@ def register_communication_tools(
     slack_bot: SlackBot | None = None,
     comm_hub: CommHub | None = None,
     state_store: StateStore | None = None,
+    event_bus: EventBus | None = None,
 ) -> None:
     """Register all communication tools."""
-    for tool in make_communication_tools(slack_bot, comm_hub, state_store):
+    for tool in make_communication_tools(slack_bot, comm_hub, state_store, event_bus):
         registry.register(tool)

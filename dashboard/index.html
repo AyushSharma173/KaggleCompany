@@ -7,40 +7,47 @@
 </head>
 <body>
     <header id="topbar">
-        <h1>Kaggle Company</h1>
+        <div style="display:flex;align-items:center;gap:16px">
+            <h1>Kaggle Company</h1>
+            <nav class="dash-nav">
+                <a href="index.html" class="dash-nav-link active">Monitor</a>
+                <a href="control.html" class="dash-nav-link">Control</a>
+            </nav>
+        </div>
         <div id="date-pills"></div>
         <div id="cost-display">--</div>
     </header>
 
     <main id="main">
-        <!-- Org chart -->
-        <section id="orgchart-section">
-            <div class="section-label">Company State</div>
-            <svg id="orgchart" xmlns="http://www.w3.org/2000/svg"></svg>
-        </section>
+        <!-- Left column: org chart + slider -->
+        <div id="left-col">
+            <section id="orgchart-section">
+                <div class="section-label">Company State</div>
+                <svg id="orgchart" xmlns="http://www.w3.org/2000/svg"></svg>
+            </section>
 
-        <!-- Time slider -->
-        <section id="slider-section">
-            <div id="slider-info">
-                <span id="step-label">Step 0/0</span>
-                <span class="sep">·</span>
-                <span id="step-time">--</span>
-                <span class="sep">·</span>
-                <span id="step-agent">--</span>
-                <span class="sep">·</span>
-                <span id="step-type">--</span>
-                <span id="step-summary"></span>
-            </div>
-            <div id="slider-controls">
-                <button id="btn-first" title="First (Home)">⏮</button>
-                <button id="btn-prev" title="Previous (←)">◀</button>
-                <input type="range" id="slider" min="0" max="0" value="0">
-                <button id="btn-next" title="Next (→)">▶</button>
-                <button id="btn-last" title="Last (End)">⏭</button>
-            </div>
-        </section>
+            <section id="slider-section">
+                <div id="slider-info">
+                    <span id="step-label">Step 0/0</span>
+                    <span class="sep">·</span>
+                    <span id="step-time">--</span>
+                    <span class="sep">·</span>
+                    <span id="step-agent">--</span>
+                    <span class="sep">·</span>
+                    <span id="step-type">--</span>
+                    <span id="step-summary"></span>
+                </div>
+                <div id="slider-controls">
+                    <button id="btn-first" title="First (Home)">⏮</button>
+                    <button id="btn-prev" title="Previous (←)">◀</button>
+                    <input type="range" id="slider" min="0" max="0" value="0">
+                    <button id="btn-next" title="Next (→)">▶</button>
+                    <button id="btn-last" title="Last (End)">⏭</button>
+                </div>
+            </section>
+        </div>
 
-        <!-- Detail panel -->
+        <!-- Right column: detail panel -->
         <section id="detail-section">
             <div id="detail-tabs">
                 <button class="tab active" data-tab="summary">Summary</button>
@@ -50,7 +57,7 @@
             </div>
             <div id="detail-content">
                 <div class="welcome">
-                    Click any agent in the org chart above to inspect it.<br>
+                    Click any agent in the org chart to inspect it.<br>
                     <span class="hint">← / → to step through time · Esc to deselect</span>
                 </div>
             </div>

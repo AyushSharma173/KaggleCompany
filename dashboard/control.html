@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kaggle Company — Control</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="control.css">
+</head>
+<body>
+    <header id="topbar">
+        <div style="display:flex;align-items:center;gap:16px">
+            <h1>Kaggle Company</h1>
+            <nav class="dash-nav">
+                <a href="index.html" class="dash-nav-link">Monitor</a>
+                <a href="control.html" class="dash-nav-link active">Control</a>
+            </nav>
+        </div>
+        <div id="ctrl-tabs"></div>
+        <div id="ctrl-status"></div>
+    </header>
+
+    <main id="ctrl-main">
+        <div id="ctrl-content"></div>
+    </main>
+
+    <!-- Save confirmation toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="control.js"></script>
+</body>
+</html>
